@@ -46,7 +46,8 @@ python Clickbd_dash_app.py
 Go to 👉 http://127.0.0.1:8050/
 
 📸 Dashboard Preview
-(Add a screenshot of your dashboard here after running the app)
+<img width="1897" height="898" alt="image" src="https://github.com/user-attachments/assets/d43386f4-2d50-4817-9641-fbef914d6cb2" />
+
 
 📌 Future Improvements
 Add authentication for secure access
