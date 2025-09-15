@@ -17,7 +17,8 @@ df = df[df['Month'].isin(valid_months)]
 df['Month_Num'] = pd.to_datetime(df['Month'], format='%b').dt.month
 
 # Build dashboard
-app = Dash(__name__)
+app = dash.Dash(__name__)
+server = app.server  # 👈 Render needs this
 
 app.layout = html.Div([
     html.H1("Sales Dashboard", style={'textAlign': 'center', 'color': '#333'}),
@@ -154,5 +155,6 @@ def update_charts(selected_month):
 
     return kpi_text, fig1, fig2, fig3, fig4, fig5, fig6, fig7, fig8
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run_server(host="0.0.0.0", port=8050)
+
