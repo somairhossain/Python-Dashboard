@@ -21,7 +21,7 @@ app = Dash(__name__)
 server = app.server  # 👈 Render needs this
 
 app.layout = html.Div([
-    html.H1("Sales Dashboard", style={'textAlign': 'center', 'color': '#333'}),
+    html.H1("CLICKBD Online Shop\n Monthly Sales Report", style={'textAlign': 'center', 'color': '#333'}),
 
     # Dropdown filter
     html.Label("Select Month:", style={'fontWeight': 'bold'}),
@@ -157,5 +157,6 @@ def update_charts(selected_month):
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
