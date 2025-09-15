@@ -21,7 +21,19 @@ app = Dash(__name__)
 server = app.server  # 👈 Render needs this
 
 app.layout = html.Div([
-    html.H1("CLICKBD Online Shop\n Monthly Sales Report", style={'textAlign': 'center', 'color': '#333'}),
+    html.H1("CLICKBD Online Shop\n Monthly Sales Report", 
+            style={
+        'textAlign': 'center',
+        'color': 'white',
+        'fontSize': '48px',
+        'fontWeight': 'bold',
+        'padding': '20px',
+        'marginBottom': '30px',
+        'borderRadius': '12px',
+        'background': 'linear-gradient(135deg, #ffdb00, #ff0053)',
+        'boxShadow': '0px 4px 20px rgba(0,0,0,0.2)',
+        'fontFamily': 'Segoe UI, sans-serif'
+            }),
 
     # Dropdown filter
     html.Label("Select Month:", style={'fontWeight': 'bold'}),
@@ -40,7 +52,7 @@ app.layout = html.Div([
         'fontSize': '42px',
         'fontWeight': 'bold',
         'color': "#ffffff",
-        'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'background': 'linear-gradient(135deg, #8E2DE2, #FF6B6B)'',
         'padding': '25px',
         'borderRadius': '15px',
         'textAlign': 'center',
@@ -157,6 +169,7 @@ def update_charts(selected_month):
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
