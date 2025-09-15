@@ -50,6 +50,10 @@ app.layout = html.Div([
 
     # Graphs
     html.Div([
+        dcc.Graph(id='month-sales', style={'width': '90%', 'display': 'inline-block'})
+    ]),
+
+    html.Div([
         dcc.Graph(id='salesperson-sales', style={'width': '48%', 'display': 'inline-block'}),
         dcc.Graph(id='delivery-status', style={'width': '48%', 'display': 'inline-block'})
     ]),
@@ -72,6 +76,7 @@ app.layout = html.Div([
 # Callbacks
 @app.callback(
     [Output('qty-kpi', 'children'),
+     Output('month-sales', 'figure'),
      Output('salesperson-sales', 'figure'),
      Output('delivery-status', 'figure'),
      Output('order-set-sales', 'figure'),
@@ -90,9 +95,26 @@ def update_charts(selected_month):
     # 1. KPI text
     if selected_month == "All":
         kpi_text = f"📦 Total QTY (Overall): {dff['QTY'].sum()}"
+        
+        
     else:
         kpi_text = f"📦 Total QTY in {selected_month}: {dff['QTY'].sum()}"
-
+    # 1. Month QTY
+    month_df = df.groupby(['Month','Month_Num'])['QTY'].sum().reset_index().sort_values('Month_Num')
+    fig1 = px.line(month_df, x='Month', y='QTY',
+                   title="Monthly Sales Trend (QTY)",
+                   markers=True,
+                   text='QTY')
+    fig1.update_traces(line=dict(color="#b92959", width=3), textposition="top center")
+    fig1.update_layout(
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family="Arial", size=14, color="#2c3e50"),
+        xaxis=dict(showgrid=False),
+        yaxis=dict(gridcolor='lightgrey'),
+        margin=dict(l=40, r=40, t=60, b=40)
+    )
+    
     # 2. Sales Person QTY
     fig2 = px.bar(dff.groupby('Sales Person')['QTY'].sum().reset_index(),
                   x='Sales Person', y='QTY', title="Sales Person Sales (QTY)",
@@ -130,7 +152,7 @@ def update_charts(selected_month):
               x='Sub-Category', y='QTY', title="Sub-Category-wise Sales (QTY)",
               color='Sub-Category', color_discrete_sequence=px.colors.qualitative.Set2)
 
-    return kpi_text, fig2, fig3, fig4, fig5, fig6, fig7, fig8
+    return kpi_text, fig1, fig2, fig3, fig4, fig5, fig6, fig7, fig8
 
 if __name__ == '__main__':
     app.run(debug=True)
