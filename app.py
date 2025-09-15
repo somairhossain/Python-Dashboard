@@ -17,7 +17,7 @@ df = df[df['Month'].isin(valid_months)]
 df['Month_Num'] = pd.to_datetime(df['Month'], format='%b').dt.month
 
 # Build dashboard
-app = dash.Dash(__name__)
+app = Dash(__name__)
 server = app.server  # 👈 Render needs this
 
 app.layout = html.Div([
@@ -157,4 +157,5 @@ def update_charts(selected_month):
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
