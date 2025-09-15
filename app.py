@@ -52,7 +52,7 @@ app.layout = html.Div([
         'fontSize': '42px',
         'fontWeight': 'bold',
         'color': "#ffffff",
-        'background': 'linear-gradient(135deg, #8E2DE2, #FF6B6B)'',
+        'background': 'linear-gradient(135deg, #8E2DE2, #FF6B6B)',
         'padding': '25px',
         'borderRadius': '15px',
         'textAlign': 'center',
@@ -169,6 +169,7 @@ def update_charts(selected_month):
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
