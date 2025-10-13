@@ -15,7 +15,7 @@ df = df[df['Month'].isin(valid_months)]
 
 # Add month number for sorting
 df['Month_Num'] = pd.to_datetime(df['Month'], format='%b').dt.month
-
+df['Year'] = pd.to_datetime(df['Year']).dt.year
 # Build dashboard
 app = Dash(__name__)
 server = app.server  # 👈 Render needs this
@@ -36,6 +36,15 @@ app.layout = html.Div([
             }),
 
     # Dropdown filter
+    html.Label("Select Year:", style={'fontWeight': 'bold'}),
+dcc.Dropdown(
+    id='year-filter',
+    options=[{'label': 'All', 'value': 'All'}] + 
+            [{'label': y, 'value': y} for y in sorted(df['Year'].unique())],
+    value='All',
+    clearable=False,
+    style={'width': '300px'}
+),
     html.Label("Select Month:", style={'fontWeight': 'bold'}),
     dcc.Dropdown(
     id='month-filter',
@@ -67,22 +76,22 @@ app.layout = html.Div([
     ]),
 
     html.Div([
-        dcc.Graph(id='salesperson-sales', style={'width': '48%', 'display': 'inline-block'}),
-        dcc.Graph(id='delivery-status', style={'width': '48%', 'display': 'inline-block'})
+        dcc.Graph(id='salesperson-sales', style={'width': '95%', 'display': 'inline-block'}),
+        dcc.Graph(id='delivery-status', style={'width': '95%', 'display': 'inline-block'})
     ]),
 
     html.Div([
-        dcc.Graph(id='order-set-sales', style={'width': '48%', 'display': 'inline-block'}),
-        dcc.Graph(id='country-sales', style={'width': '48%', 'display': 'inline-block'})
+        dcc.Graph(id='order-set-sales', style={'width': '95%', 'display': 'inline-block'}),
+        dcc.Graph(id='country-sales', style={'width': '95%', 'display': 'inline-block'})
     ]),
 
     html.Div([
-        dcc.Graph(id='district-sales', style={'width': '48%', 'display': 'inline-block'}),
-        dcc.Graph(id='category-sales', style={'width': '48%', 'display': 'inline-block'})
+        dcc.Graph(id='district-sales', style={'width': '95%', 'display': 'inline-block'}),
+        dcc.Graph(id='category-sales', style={'width': '95%', 'display': 'inline-block'})
     ]),
 
     html.Div([
-        dcc.Graph(id='subcategory-sales', style={'width': '48%', 'display': 'inline-block'})
+        dcc.Graph(id='subcategory-sales', style={'width': '95%', 'display': 'inline-block'})
     ])
 ])
 
@@ -97,22 +106,30 @@ app.layout = html.Div([
      Output('district-sales', 'figure'),
      Output('category-sales', 'figure'),
      Output('subcategory-sales', 'figure')],
-    [Input('month-filter', 'value')]
+    [Input('year-filter', 'value'),
+     Input('month-filter', 'value')]
 )
-def update_charts(selected_month):
-    if selected_month == "All":
-        dff = df.copy()
-    else:
-        dff = df[df['Month'] == selected_month]
+def update_charts(selected_year, selected_month):
+    dff = df.copy()
+    
+    #Apply Year filter
+    if selected_year != 'All':
+        dff = dff[dff['Year'] == selected_year]
+
+    #Apply Month Filter
+    if selected_month != "All":
+        dff = dff[dff['Month'] == selected_month]
 
     # 1. KPI text
-    if selected_month == "All":
+    if selected_year == "All":
         kpi_text = f"📦 Total QTY (Overall): {dff['QTY'].sum()}"
-        
-        
+    elif selected_year != "All" and selected_month == "All":
+        kpi_text = f"📦 Total QTY in {selected_year}: {dff['QTY'].sum()}"
+    elif selected_year != "All" and selected_month != "All":
+        kpi_text = f"📦 Total QTY in {selected_month} {selected_year}: {dff['QTY'].sum()}"    
     else:
         kpi_text = f"📦 Total QTY in {selected_month}: {dff['QTY'].sum()}"
-    # 1. Month QTY
+    # 2. Month QTY
     month_df = df.groupby(['Month','Month_Num'])['QTY'].sum().reset_index().sort_values('Month_Num')
     fig1 = px.line(month_df, x='Month', y='QTY',
                    title="Monthly Sales Trend (QTY)",
@@ -128,38 +145,38 @@ def update_charts(selected_month):
         margin=dict(l=40, r=40, t=60, b=40)
     )
     
-    # 2. Sales Person QTY
+    # 4. Sales Person QTY
     fig2 = px.bar(dff.groupby('Sales Person')['QTY'].sum().reset_index(),
                   x='Sales Person', y='QTY', title="Sales Person Sales (QTY)",
                   color='Sales Person', color_discrete_sequence=px.colors.qualitative.Bold)
 
-    # 3. Delivery Status (Pie)
+    # 5. Delivery Status (Pie)
     fig3 = px.pie(dff, names='Order Status', values='QTY',
                   title="Delivery Status",
                   color_discrete_sequence=px.colors.sequential.Sunsetdark)
 
-    # 4. Order Set Sales
+    # 6. Order Set Sales
     fig4 = px.bar(dff.groupby('Order Set')['QTY'].sum().reset_index(),
                   x='Order Set', y='QTY', title="Order Set Sold (QTY)",
                   color='QTY', color_continuous_scale='Turbo')
 
-    # 5. Country wise QTY
+    # 7. Country wise QTY
     fig5 = px.bar(dff.groupby('Order Country')['QTY'].sum().reset_index(),
                   x='Order Country', y='QTY', title="Country-wise Sales (QTY)",
                   color='Order Country', color_discrete_sequence=px.colors.qualitative.Pastel)
 
-    # 6. District wise QTY
+    # 8. District wise QTY
     fig6 = px.bar(dff.groupby('District')['QTY'].sum().reset_index(),
                   x='District', y='QTY', title="District-wise Sales (QTY)",
                   color='District', color_discrete_sequence=px.colors.qualitative.Vivid)
 
-    # 7. Category wise QTY (remove null)
+    # 9. Category wise QTY (remove null)
     cat_df = dff[dff['Category'].notna() & (dff['Category'].str.lower() != 'null')]
     fig7 = px.bar(cat_df.groupby('Category')['QTY'].sum().reset_index(),
                 x='Category', y='QTY', title="Category-wise Sales (QTY)",
               color='Category', color_discrete_sequence=px.colors.qualitative.Safe)
 
-    # 8. Sub-Category wise QTY (remove null)
+    # 10. Sub-Category wise QTY (remove null)
     subcat_df = dff[dff['Sub-Category'].notna() & (dff['Sub-Category'].str.lower() != 'null')]
     fig8 = px.bar(subcat_df.groupby('Sub-Category')['QTY'].sum().reset_index(),
               x='Sub-Category', y='QTY', title="Sub-Category-wise Sales (QTY)",
@@ -169,6 +186,7 @@ def update_charts(selected_month):
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
