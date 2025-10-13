@@ -15,7 +15,7 @@ df = df[df['Month'].isin(valid_months)]
 
 # Add month number for sorting
 df['Month_Num'] = pd.to_datetime(df['Month'], format='%b').dt.month
-df['Year'] = pd.to_datetime(df['Year']).dt.year
+df['Year'] = df['Year'].astype(str).str.extract(r'(\d{4})').astype(float).astype('Int64')
 # Build dashboard
 app = Dash(__name__)
 server = app.server  # 👈 Render needs this
@@ -186,6 +186,7 @@ def update_charts(selected_year, selected_month):
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
