@@ -72,26 +72,26 @@ dcc.Dropdown(
 
     # Graphs
     html.Div([
-        dcc.Graph(id='month-sales', style={'width': '90%', 'display': 'inline-block'})
+        dcc.Graph(id='month-sales', style={'width': '90%', 'height' : '80vh' , 'display': 'inline-block'})
     ]),
 
     html.Div([
-        dcc.Graph(id='salesperson-sales', style={'width': '95%', 'height' : '100vh' , 'display': 'inline-block'}),
-        dcc.Graph(id='delivery-status', style={'width': '95%', 'height' : '100vh', 'display': 'inline-block'})
+        dcc.Graph(id='salesperson-sales', style={'width': '95%', 'height' : '80vh' , 'display': 'inline-block'}),
+        dcc.Graph(id='delivery-status', style={'width': '95%', 'height' : '80vh', 'display': 'inline-block'})
     ]),
 
     html.Div([
-        dcc.Graph(id='order-set-sales', style={'width': '95%', 'height' : '100vh', 'display': 'inline-block'}),
-        dcc.Graph(id='country-sales', style={'width': '95%', 'height' : '100vh', 'display': 'inline-block'})
+        dcc.Graph(id='order-set-sales', style={'width': '95%', 'height' : '80vh', 'display': 'inline-block'}),
+        dcc.Graph(id='country-sales', style={'width': '95%', 'height' : '80vh', 'display': 'inline-block'})
     ]),
 
     html.Div([
-        dcc.Graph(id='district-sales', style={'width': '95%', 'height' : '100vh', 'display': 'inline-block'}),
-        dcc.Graph(id='category-sales', style={'width': '95%', 'height' : '100vh', 'display': 'inline-block'})
+        dcc.Graph(id='district-sales', style={'width': '95%', 'height' : '80vh', 'display': 'inline-block'}),
+        dcc.Graph(id='category-sales', style={'width': '95%', 'height' : '80vh', 'display': 'inline-block'})
     ]),
 
     html.Div([
-        dcc.Graph(id='subcategory-sales', style={'width': '95%', 'height' : '100vh', 'display': 'inline-block'})
+        dcc.Graph(id='subcategory-sales', style={'width': '95%', 'height' : '80vh', 'display': 'inline-block'})
     ])
 ])
 
@@ -186,6 +186,7 @@ def update_charts(selected_year, selected_month):
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
