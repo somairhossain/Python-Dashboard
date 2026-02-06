@@ -130,8 +130,8 @@ def update_charts(selected_year, selected_month):
     else:
         kpi_text = f"📦 Total QTY in {selected_month}: {dff['QTY'].sum()}"
     # 2. Month QTY
-    month_df = df.groupby(['Month','Month_Num'])['QTY'].sum().reset_index().sort_values('Month_Num')
-    trend_df = dff.groupby(
+    # month_df = df.groupby(['Month','Month_Num'])['QTY'].sum().reset_index().sort_values('Month_Num')
+    trend_df = df.groupby(
     ['Year', 'Month', 'Month_Num'], as_index=False
 )['QTY'].sum()
 
@@ -141,11 +141,11 @@ fig1 = px.line(
     trend_df,
     x='Month',
     y='QTY',
-    color='Year',              # 👈 separate line per year
+    color='Year',          # separate line per year
     markers=True,
     title="Monthly Sales Trend by Year (QTY)",
     category_orders={
-        'Month': valid_months   # 👈 ensures Jan → Dec order
+        'Month': valid_months
     }
 )
     fig1.update_traces(line=dict(color="#b92959", width=3), textposition="top center")
@@ -199,6 +199,7 @@ fig1 = px.line(
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
