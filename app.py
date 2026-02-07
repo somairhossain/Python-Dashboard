@@ -135,21 +135,52 @@ def update_charts(selected_year, selected_month):
     ['Year', 'Month', 'Month_Num'], as_index=False
 )['QTY'].sum()
 
+# trend_df = trend_df.sort_values('Month_Num')
+
+# fig1 = px.line(
+#     trend_df,
+#     x='Month',
+#     y='QTY',
+#     color='Year',          # separate line per year
+#     markers=True,
+#     title="Monthly Sales Trend by Year (QTY)",
+#     category_orders={
+#         'Month': valid_months
+#     }
+# )
+#     fig1.update_traces(line=dict(color="#b92959", width=3), textposition="top center")
+#     )
+
+# fig1.update_layout(
+#     plot_bgcolor='white',
+#     paper_bgcolor='white',
+#     font=dict(family="Arial", size=14, color="#2c3e50"),
+#     xaxis=dict(showgrid=False),
+#     yaxis=dict(gridcolor='lightgrey'),
+#     legend_title_text='Year',
+#     margin=dict(l=40, r=40, t=60, b=40)
+# )
+
+    # 2. Monthly Sales Trend (ALL Years – Ignore Filters)
+
+trend_df = df.groupby(
+    ['Year', 'Month', 'Month_Num'], as_index=False
+)['QTY'].sum()
+
 trend_df = trend_df.sort_values('Month_Num')
+
+# 🔑 CRITICAL FIX: convert Year to string for categorical coloring
+trend_df['Year'] = trend_df['Year'].astype(str)
 
 fig1 = px.line(
     trend_df,
     x='Month',
     y='QTY',
-    color='Year',          # separate line per year
+    color='Year',                 # now treated as categorical
     markers=True,
     title="Monthly Sales Trend by Year (QTY)",
-    category_orders={
-        'Month': valid_months
-    }
+    category_orders={'Month': valid_months}
 )
-    fig1.update_traces(line=dict(color="#b92959", width=3), textposition="top center")
-    )
 
 fig1.update_layout(
     plot_bgcolor='white',
@@ -202,6 +233,7 @@ fig1.update_layout(
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
