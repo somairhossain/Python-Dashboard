@@ -130,78 +130,21 @@ def update_charts(selected_year, selected_month):
     else:
         kpi_text = f"📦 Total QTY in {selected_month}: {dff['QTY'].sum()}"
     # 2. Month QTY
-    # month_df = df.groupby(['Month','Month_Num'])['QTY'].sum().reset_index().sort_values('Month_Num')
-    trend_df = df.groupby(
-    ['Year', 'Month', 'Month_Num'], as_index=False
-)['QTY'].sum()
-
-# trend_df = trend_df.sort_values('Month_Num')
-
-# fig1 = px.line(
-#     trend_df,
-#     x='Month',
-#     y='QTY',
-#     color='Year',          # separate line per year
-#     markers=True,
-#     title="Monthly Sales Trend by Year (QTY)",
-#     category_orders={
-#         'Month': valid_months
-#     }
-# )
-#     fig1.update_traces(line=dict(color="#b92959", width=3), textposition="top center")
-#     )
-
-# fig1.update_layout(
-#     plot_bgcolor='white',
-#     paper_bgcolor='white',
-#     font=dict(family="Arial", size=14, color="#2c3e50"),
-#     xaxis=dict(showgrid=False),
-#     yaxis=dict(gridcolor='lightgrey'),
-#     legend_title_text='Year',
-#     margin=dict(l=40, r=40, t=60, b=40)
-# )
-
-    # 2. Monthly Sales Trend (ALL Years – Ignore Filters)
-'''
-trend_df = df.groupby(
-    ['Year', 'Month', 'Month_Num'], as_index=False
-)['QTY'].sum()
-
-trend_df = trend_df.sort_values('Month_Num')
-
-# 🔑 CRITICAL FIX: convert Year to string for categorical coloring
-# 2. Monthly Sales Trend (ALL Years, Separate Lines)
-
-trend_df = df.groupby(
-    ['Year', 'Month', 'Month_Num'], as_index=False
-)['QTY'].sum()
-
-trend_df = trend_df.sort_values('Month_Num')
-
-# Force categorical year
-trend_df['Year'] = trend_df['Year'].astype(str)
-
-fig1 = px.line(
-    trend_df,
-    x='Month',
-    y='QTY',
-    color='Year',
-    line_group='Year',   # 🔑 THIS IS THE MISSING PIECE
-    markers=True,
-    title="Monthly Sales Trend by Year (QTY)",
-    category_orders={'Month': valid_months}
-)
-
-fig1.update_layout(
-    plot_bgcolor='white',
-    paper_bgcolor='white',
-    font=dict(family="Arial", size=14, color="#2c3e50"),
-    xaxis=dict(showgrid=False),
-    yaxis=dict(gridcolor='lightgrey'),
-    legend_title_text='Year',
-    margin=dict(l=40, r=40, t=60, b=40)
-)
-'''  
+    month_df = df.groupby(['Month','Month_Num'])['QTY'].sum().reset_index().sort_values('Month_Num')
+    fig1 = px.line(month_df, x='Month', y='QTY',
+                   title="Monthly Sales Trend (QTY)",
+                   markers=True,
+                   text='QTY')
+    fig1.update_traces(line=dict(color="#b92959", width=3), textposition="top center")
+    fig1.update_layout(
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family="Arial", size=14, color="#2c3e50"),
+        xaxis=dict(showgrid=False),
+        yaxis=dict(gridcolor='lightgrey'),
+        margin=dict(l=40, r=40, t=60, b=40)
+    )
+    
     # 4. Sales Person QTY
     fig2 = px.bar(dff.groupby('Sales Person')['QTY'].sum().reset_index(),
                   x='Sales Person', y='QTY', title="Sales Person Sales (QTY)",
@@ -243,6 +186,7 @@ fig1.update_layout(
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
