@@ -162,7 +162,7 @@ def update_charts(selected_year, selected_month):
 # )
 
     # 2. Monthly Sales Trend (ALL Years – Ignore Filters)
-
+'''
 trend_df = df.groupby(
     ['Year', 'Month', 'Month_Num'], as_index=False
 )['QTY'].sum()
@@ -201,7 +201,7 @@ fig1.update_layout(
     legend_title_text='Year',
     margin=dict(l=40, r=40, t=60, b=40)
 )
-    
+'''  
     # 4. Sales Person QTY
     fig2 = px.bar(dff.groupby('Sales Person')['QTY'].sum().reset_index(),
                   x='Sales Person', y='QTY', title="Sales Person Sales (QTY)",
@@ -243,6 +243,7 @@ fig1.update_layout(
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
