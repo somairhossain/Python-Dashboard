@@ -170,13 +170,23 @@ trend_df = df.groupby(
 trend_df = trend_df.sort_values('Month_Num')
 
 # 🔑 CRITICAL FIX: convert Year to string for categorical coloring
+# 2. Monthly Sales Trend (ALL Years, Separate Lines)
+
+trend_df = df.groupby(
+    ['Year', 'Month', 'Month_Num'], as_index=False
+)['QTY'].sum()
+
+trend_df = trend_df.sort_values('Month_Num')
+
+# Force categorical year
 trend_df['Year'] = trend_df['Year'].astype(str)
 
 fig1 = px.line(
     trend_df,
     x='Month',
     y='QTY',
-    color='Year',                 # now treated as categorical
+    color='Year',
+    line_group='Year',   # 🔑 THIS IS THE MISSING PIECE
     markers=True,
     title="Monthly Sales Trend by Year (QTY)",
     category_orders={'Month': valid_months}
@@ -233,6 +243,7 @@ fig1.update_layout(
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
