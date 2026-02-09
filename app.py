@@ -178,6 +178,7 @@ def update_charts(selected_year, selected_month):
         y='QTY',
         color='Year',
         markers=True,
+        text='QTY',
         title="Monthly Sales Trend by Year (QTY)"
         )
 
@@ -236,6 +237,7 @@ def update_charts(selected_year, selected_month):
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
