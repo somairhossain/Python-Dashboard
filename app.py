@@ -130,41 +130,56 @@ def update_charts(selected_year, selected_month):
     else:
         kpi_text = f"📦 Total QTY in {selected_month}: {dff['QTY'].sum()}"
     # 2. Month QTY
-    # month_df = df.groupby(['Month','Month_Num'])['QTY'].sum().reset_index().sort_values('Month_Num')
-    # fig1 = px.line(month_df, x='Month', y='QTY',
-    #                title="Monthly Sales Trend (QTY)",
-    #                markers=True,
-    #                text='QTY')
-    # fig1.update_traces(line=dict(color="#b92959", width=3), textposition="top center")
+
+    # month_df = (
+    #     dff.groupby(['Year', 'Month', 'Month_Num'])['QTY']
+    #    .sum()
+    #    .reset_index()
+    #    .sort_values('Month_Num')
+    # )
+
+    # fig1 = px.line(
+    #     month_df,
+    #     x='Month',
+    #     y='QTY',
+    #     color='Year',              # 👈 each year = one line
+    #     markers=True,
+    #     text='QTY',
+    #     title="Monthly Sales Trend by Year (QTY)"
+    # )
+
+    # fig1.update_traces(textposition="top center")
+
     # fig1.update_layout(
     #     plot_bgcolor='white',
     #     paper_bgcolor='white',
     #     font=dict(family="Arial", size=14, color="#2c3e50"),
-    #     xaxis=dict(showgrid=False),
+    #     xaxis=dict(
+    #         categoryorder='array',
+    #         categoryarray=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    #         showgrid=False
+    #     ),
     #     yaxis=dict(gridcolor='lightgrey'),
+    #     legend_title_text='Year',
     #     margin=dict(l=40, r=40, t=60, b=40)
     # )
-
-    # 2. Monthly QTY by Year (Multi-line)
+    # 2. Monthly QTY by Year (Multi-line, NO FILTERING)
 
     month_df = (
-        dff.groupby(['Year', 'Month', 'Month_Num'])['QTY']
-       .sum()
-       .reset_index()
-       .sort_values('Month_Num')
+        df.groupby(['Year', 'Month', 'Month_Num'])['QTY']
+      .sum()
+      .reset_index()
+      .sort_values('Month_Num')
     )
 
     fig1 = px.line(
         month_df,
         x='Month',
         y='QTY',
-        color='Year',              # 👈 each year = one line
+        color='Year',
         markers=True,
-        text='QTY',
         title="Monthly Sales Trend by Year (QTY)"
-    )
-
-    fig1.update_traces(textposition="top center")
+        )
 
     fig1.update_layout(
         plot_bgcolor='white',
@@ -172,14 +187,14 @@ def update_charts(selected_year, selected_month):
         font=dict(family="Arial", size=14, color="#2c3e50"),
         xaxis=dict(
             categoryorder='array',
-            categoryarray=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+            categoryarray=['Jan','Feb','Mar','Apr','May','Jun',
+                           'Jul','Aug','Sep','Oct','Nov','Dec'],
             showgrid=False
         ),
         yaxis=dict(gridcolor='lightgrey'),
         legend_title_text='Year',
         margin=dict(l=40, r=40, t=60, b=40)
     )
-    
     # 4. Sales Person QTY
     fig2 = px.bar(dff.groupby('Sales Person')['QTY'].sum().reset_index(),
                   x='Sales Person', y='QTY', title="Sales Person Sales (QTY)",
@@ -221,6 +236,7 @@ def update_charts(selected_year, selected_month):
 
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050)
+
 
 
 
