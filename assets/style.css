@@ -22,7 +22,7 @@ body, html {
     overflow-x: hidden;
 }
 
-body { background: red !important; }
+
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
