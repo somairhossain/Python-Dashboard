@@ -13,7 +13,7 @@
 
 /* Reset */
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: red !important; }
+
 body, html {
     background: var(--bg);
     color: var(--text);
@@ -21,6 +21,8 @@ body, html {
     min-height: 100vh;
     overflow-x: hidden;
 }
+
+body { background: red !important; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
