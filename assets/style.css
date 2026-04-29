@@ -22,8 +22,6 @@ body, html {
     overflow-x: hidden;
 }
 
-
-
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
