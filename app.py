@@ -1,34 +1,72 @@
-import time
+import time, os, json
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import Dash, dcc, html, Input, Output, callback_context
 import dash_bootstrap_components as dbc
 
-# ─── Data Loading (TTL cache) ────────────────────────────────────────────────
-SHEET_NAME = 'ClickBD_Data'
-SHEET_ID   = '1_TWU8G6FDjEhRaFxoAwo3jD93Ccmn6zGRuphyrqww2k'
-URL        = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}"
-CACHE_TTL  = 300
-_cache     = {"df": None, "ts": 0}
-
+# ─── Data Loading ─────────────────────────────────────────────────────────────
+SHEET_ID     = '1_TWU8G6FDjEhRaFxoAwo3jD93Ccmn6zGRuphyrqww2k'
+SHEET_NAME   = 'ClickBD_Data'
+CACHE_TTL    = 300
+_cache       = {"df": None, "ts": 0}
 VALID_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 def load_data(force=False):
     now = time.time()
-    if force or _cache["df"] is None or (now - _cache["ts"]) > CACHE_TTL:
-        df = pd.read_csv(URL)
-        df['Month'] = df['Month'].astype(str).str.strip()
-        df = df[df['Month'].isin(VALID_MONTHS)]
-        df['Month_Num'] = pd.to_datetime(df['Month'], format='%b').dt.month
-        df['Year'] = df['Year'].astype(str).str.extract(r'(\d{4})').astype(float).astype('Int64')
-        _cache["df"] = df
-        _cache["ts"] = now
-    return _cache["df"]
+    if not force and _cache["df"] is not None and (now - _cache["ts"]) < CACHE_TTL:
+        return _cache["df"]
+
+    df = None
+
+    # ── Method 1: Google Sheets API via service account (most reliable) ───
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS")
+    if creds_json:
+        try:
+            import gspread
+            from google.oauth2.service_account import Credentials
+            scopes = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+            creds  = Credentials.from_service_account_info(json.loads(creds_json), scopes=scopes)
+            gc     = gspread.authorize(creds)
+            ws     = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+            rows   = ws.get_all_values()
+            df     = pd.DataFrame(rows[1:], columns=rows[0])
+            print("✅ Loaded via Google Sheets API")
+        except Exception as e:
+            print(f"⚠️  Sheets API failed: {e}")
+
+    # ── Method 2: Direct CSV fallback ─────────────────────────────────────
+    if df is None:
+        try:
+            import requests, io
+            url = (f"https://docs.google.com/spreadsheets/d/{SHEET_ID}"
+                   f"/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}")
+            r   = requests.get(url, timeout=15)
+            r.raise_for_status()
+            df  = pd.read_csv(io.StringIO(r.text))
+            print("✅ Loaded via CSV URL")
+        except Exception as e:
+            print(f"⚠️  CSV URL failed: {e}")
+
+    if df is None or df.empty:
+        print("❌ All data sources failed — returning empty DataFrame")
+        return _cache["df"] or pd.DataFrame()
+
+    # ── Clean ─────────────────────────────────────────────────────────────
+    df['Month'] = df['Month'].astype(str).str.strip()
+    df = df[df['Month'].isin(VALID_MONTHS)]
+    df['Month_Num'] = pd.to_datetime(df['Month'], format='%b').dt.month
+    df['Year'] = df['Year'].astype(str).str.extract(r'(\d{4})').astype(float).astype('Int64')
+    if 'QTY' in df.columns:
+        df['QTY'] = pd.to_numeric(df['QTY'], errors='coerce').fillna(0).astype(int)
+
+    _cache["df"] = df
+    _cache["ts"] = now
+    return df
 
 load_data()
 
-# ─── Theme (Plotly charts only) ───────────────────────────────────────────────
+# ─── Theme ────────────────────────────────────────────────────────────────────
 BG      = '#0a0e1a'
 SURFACE = '#111827'
 CARD    = '#161d2e'
@@ -52,10 +90,9 @@ PLOTLY_LAYOUT = dict(
     title=dict(font=dict(family="'Syne', sans-serif", size=15, color=TEXT), x=0.02),
     hoverlabel=dict(bgcolor=SURFACE, font_color=TEXT, bordercolor=BORDER),
 )
-
 CHART_COLORS = [CYAN, CORAL, GOLD, GREEN, '#c77dff', '#ff9f1c', '#4cc9f0', '#f72585']
 
-# ─── App — CSS served automatically from assets/custom.css ───────────────────
+# ─── App ──────────────────────────────────────────────────────────────────────
 app    = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
@@ -111,52 +148,45 @@ app.layout = html.Div([
     ], className='filter-bar'),
 
     html.Div([
-        html.Div([
-            html.Div('📦', className='kpi-icon'),
-            html.Div(id='kpi-qty',     className='kpi-value cyan'),
-            html.Div('TOTAL QTY SOLD', className='kpi-label'),
-            html.Div(id='kpi-qty-sub', className='kpi-sub'),
-        ], className='kpi-card cyan'),
-        html.Div([
-            html.Div('🛒', className='kpi-icon'),
-            html.Div(id='kpi-orders',     className='kpi-value coral'),
-            html.Div('TOTAL ORDERS',      className='kpi-label'),
-            html.Div(id='kpi-orders-sub', className='kpi-sub'),
-        ], className='kpi-card coral'),
-        html.Div([
-            html.Div('📍', className='kpi-icon'),
-            html.Div(id='kpi-districts',     className='kpi-value gold'),
-            html.Div('DISTRICTS REACHED',    className='kpi-label'),
-            html.Div(id='kpi-districts-sub', className='kpi-sub'),
-        ], className='kpi-card gold'),
-        html.Div([
-            html.Div('🏆', className='kpi-icon'),
-            html.Div(id='kpi-top-sp',     className='kpi-value green'),
-            html.Div('TOP SALES PERSON',  className='kpi-label'),
-            html.Div(id='kpi-top-sp-sub', className='kpi-sub'),
-        ], className='kpi-card green'),
+        html.Div([html.Div('📦', className='kpi-icon'),
+                  html.Div(id='kpi-qty',     className='kpi-value cyan'),
+                  html.Div('TOTAL QTY SOLD', className='kpi-label'),
+                  html.Div(id='kpi-qty-sub', className='kpi-sub')],
+                 className='kpi-card cyan'),
+        html.Div([html.Div('🛒', className='kpi-icon'),
+                  html.Div(id='kpi-orders',     className='kpi-value coral'),
+                  html.Div('TOTAL ORDERS',      className='kpi-label'),
+                  html.Div(id='kpi-orders-sub', className='kpi-sub')],
+                 className='kpi-card coral'),
+        html.Div([html.Div('📍', className='kpi-icon'),
+                  html.Div(id='kpi-districts',     className='kpi-value gold'),
+                  html.Div('DISTRICTS REACHED',    className='kpi-label'),
+                  html.Div(id='kpi-districts-sub', className='kpi-sub')],
+                 className='kpi-card gold'),
+        html.Div([html.Div('🏆', className='kpi-icon'),
+                  html.Div(id='kpi-top-sp',     className='kpi-value green'),
+                  html.Div('TOP SALES PERSON',  className='kpi-label'),
+                  html.Div(id='kpi-top-sp-sub', className='kpi-sub')],
+                 className='kpi-card green'),
     ], className='kpi-row'),
 
     section('SALES TREND'),
     html.Div([make_chart_card('month-sales', '380px')], className='chart-grid cols-1'),
 
     section('PERFORMANCE BREAKDOWN'),
-    html.Div([
-        make_chart_card('salesperson-sales', '360px'),
-        make_chart_card('delivery-status',   '360px'),
-    ], className='chart-grid cols-2'),
+    html.Div([make_chart_card('salesperson-sales', '360px'),
+              make_chart_card('delivery-status',   '360px')],
+             className='chart-grid cols-2'),
 
     section('GEOGRAPHIC DISTRIBUTION'),
-    html.Div([
-        make_chart_card('country-sales',  '360px'),
-        make_chart_card('district-sales', '360px'),
-    ], className='chart-grid cols-2'),
+    html.Div([make_chart_card('country-sales',  '360px'),
+              make_chart_card('district-sales', '360px')],
+             className='chart-grid cols-2'),
 
     section('PRODUCT INSIGHTS'),
-    html.Div([
-        make_chart_card('order-set-sales', '360px'),
-        make_chart_card('category-sales',  '360px'),
-    ], className='chart-grid cols-2'),
+    html.Div([make_chart_card('order-set-sales', '360px'),
+              make_chart_card('category-sales',  '360px')],
+             className='chart-grid cols-2'),
     html.Div([make_chart_card('subcategory-sales', '400px')], className='chart-grid cols-1'),
 
     html.Footer([
@@ -198,8 +228,16 @@ app.layout = html.Div([
 )
 def update_dashboard(n_clicks, sel_year, sel_month, sel_sp, sel_status):
     ctx    = callback_context
-    forced = ctx.triggered and ctx.triggered[0]['prop_id'] == 'refresh-btn.n_clicks'
-    df     = load_data(force=bool(forced))
+    forced = bool(ctx.triggered and ctx.triggered[0]['prop_id'] == 'refresh-btn.n_clicks')
+    df     = load_data(force=forced)
+
+    if df is None or df.empty:
+        empty = {'label': 'No data', 'value': 'All'}
+        empty_fig = go.Figure().update_layout(**PLOTLY_LAYOUT,
+            title='No data available — check Google Sheets connection')
+        return ([empty],[empty],[empty],[empty],
+                'No data loaded', '—','—','—','—','—','—','—','—',
+                *[empty_fig]*8, 'No records')
 
     all_opt     = [{'label': '— All —', 'value': 'All'}]
     year_opts   = all_opt + [{'label': int(y), 'value': y}
@@ -246,23 +284,21 @@ def update_dashboard(n_clicks, sel_year, sel_month, sel_sp, sel_status):
                .reset_index().sort_values('QTY', ascending=True))
     fig2 = px.bar(sp_df, x='QTY', y='Sales Person', orientation='h',
                   title='Sales Person Performance (QTY)',
-                  color='QTY', color_continuous_scale=[[0, CORAL+'44'], [1, CORAL]],
+                  color='QTY', color_continuous_scale=[[0,CORAL+'44'],[1,CORAL]],
                   text_auto=True)
     fig2.update_traces(textfont_color=TEXT, textposition='outside')
     fig2.update_layout(**PLOTLY_LAYOUT)
 
     vc = dff['Order Status'].value_counts()
-    fig3 = go.Figure(go.Pie(
-        labels=vc.index, values=vc.values, hole=0.55,
+    fig3 = go.Figure(go.Pie(labels=vc.index, values=vc.values, hole=0.55,
         marker=dict(colors=CHART_COLORS, line=dict(color=BG, width=2)),
-        textfont=dict(color=TEXT),
-    ))
+        textfont=dict(color=TEXT)))
     fig3.update_layout(**PLOTLY_LAYOUT, title='Order Status Distribution', showlegend=True)
 
     os_df = (dff.groupby('Order Set')['QTY'].sum()
                .reset_index().sort_values('QTY', ascending=False))
     fig4 = px.bar(os_df, x='Order Set', y='QTY', title='Order Set Breakdown',
-                  color='QTY', color_continuous_scale=[[0, GOLD+'44'], [1, GOLD]],
+                  color='QTY', color_continuous_scale=[[0,GOLD+'44'],[1,GOLD]],
                   text_auto=True)
     fig4.update_traces(textfont_color=TEXT)
     fig4.update_layout(**PLOTLY_LAYOUT)
@@ -278,14 +314,13 @@ def update_dashboard(n_clicks, sel_year, sel_month, sel_sp, sel_status):
     d_df = (dff.groupby('District')['QTY'].sum()
               .reset_index().sort_values('QTY', ascending=False).head(20))
     fig6 = px.bar(d_df, x='District', y='QTY', title='Top 20 Districts by QTY',
-                  color='QTY', color_continuous_scale=[[0, GREEN+'33'], [1, GREEN]],
+                  color='QTY', color_continuous_scale=[[0,GREEN+'33'],[1,GREEN]],
                   text_auto=True)
     fig6.update_traces(textfont_color=TEXT)
     fig6.update_layout(**PLOTLY_LAYOUT)
 
     cat_df = dff[dff['Category'].notna() & (dff['Category'].str.lower() != 'null')]
-    cat_df = (cat_df.groupby('Category')['QTY'].sum()
-                    .reset_index().sort_values('QTY', ascending=False))
+    cat_df = cat_df.groupby('Category')['QTY'].sum().reset_index().sort_values('QTY', ascending=False)
     fig7 = px.bar(cat_df, x='Category', y='QTY', title='Category Performance',
                   color='Category', text_auto=True,
                   color_discrete_sequence=CHART_COLORS)
@@ -293,10 +328,9 @@ def update_dashboard(n_clicks, sel_year, sel_month, sel_sp, sel_status):
     fig7.update_layout(**PLOTLY_LAYOUT, showlegend=False)
 
     sub_df = dff[dff['Sub-Category'].notna() & (dff['Sub-Category'].str.lower() != 'null')]
-    sub_df = (sub_df.groupby('Sub-Category')['QTY'].sum()
-                    .reset_index().sort_values('QTY', ascending=False))
+    sub_df = sub_df.groupby('Sub-Category')['QTY'].sum().reset_index().sort_values('QTY', ascending=False)
     fig8 = px.bar(sub_df, x='Sub-Category', y='QTY', title='Sub-Category Performance',
-                  color='QTY', color_continuous_scale=[[0, CYAN+'33'], [1, CYAN]],
+                  color='QTY', color_continuous_scale=[[0,CYAN+'33'],[1,CYAN]],
                   text_auto=True)
     fig8.update_traces(textfont_color=TEXT)
     fig8.update_layout(**PLOTLY_LAYOUT)
