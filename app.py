@@ -60,7 +60,6 @@ app    = Dash(__name__, external_stylesheets=[
     dbc.themes.BOOTSTRAP,
     "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap"
 ])
-
 server = app.server
 
 # ─── Custom CSS ───────────────────────────────────────────────────────────────
@@ -375,30 +374,6 @@ body::before {{
     color: {TEXT} !important;
 }}
 """
-# 2. Inject your CUSTOM_CSS variable into the HTML template
-# Note: We use double curly braces {{ }} for Dash placeholders so Python doesn't get confused
-app.index_string = f'''
-<!DOCTYPE html>
-<html>
-    <head>
-        {{%metas%}}
-        <title>ClickBD Sales Intelligence</title>
-        {{%favicon%}}
-        {{%css%}}
-        <style>
-            {CUSTOM_CSS}
-        </style>
-    </head>
-    <body>
-        {{%app_entry%}}
-        <footer>
-            {{%config%}}
-            {{%scripts%}}
-            {{%renderer%}}
-        </footer>
-    </body>
-</html>
-'''
 
 def make_chart_card(graph_id, height='420px'):
     return html.Div(
@@ -415,7 +390,7 @@ def section(label):
 
 app.layout = html.Div([
     # Inject CSS
-    # html.Style(CUSTOM_CSS),
+    html.Style(CUSTOM_CSS),
 
     # ── Header ──────────────────────────────────────────────────────────────
     html.Header([
